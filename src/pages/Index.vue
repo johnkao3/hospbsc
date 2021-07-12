@@ -28,11 +28,24 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
+        <div class="text-h6 text-weight-bold">區域</div>
         <div class="q-gutter-sm">
           <template v-for="(value, name) in city">
             <q-checkbox v-model="cityModel" :val="value" :label="name" :key="value" />
           </template>
         </div>
+        <q-separator inset />
+        <div class="text-h6 text-weight-bold">特約類別</div>
+        <q-select
+          v-model="category.model"
+          :options="category.options"
+          filled
+          option-value="value"
+          option-label="name"
+          emit-value
+          map-options
+          label="請選擇特約類別"
+        />
       </q-card-section>
       <q-card-actions>
         <q-btn
@@ -77,6 +90,22 @@ const city = {
   新竹市: 'O'
 }
 
+const category = [
+  { value: null, name: '不限' },
+  { value: '1', name: '醫學中心' },
+  { value: '2', name: '區域醫院' },
+  { value: '3', name: '地區醫院' },
+  { value: '4', name: '診所' },
+  { value: '5', name: '藥局' },
+  { value: '6', name: '居家護理' },
+  { value: '7', name: '康復之家' },
+  { value: '8', name: '助產所' },
+  { value: '9', name: '檢驗所' },
+  { value: 'A', name: '物理治療所' },
+  { value: 'B', name: '特約醫事放射機構' },
+  { value: 'X', name: '不詳' }
+]
+
 export default {
   name: 'PageIndex',
   data () {
@@ -84,7 +113,11 @@ export default {
       cityModel: [],
       fileModel: null,
       newData: [],
-      city: city
+      city: city,
+      category: {
+        model: null,
+        options: category
+      }
     }
   },
   methods: {
@@ -127,6 +160,7 @@ export default {
       reader.readAsText(input, 'utf-16le')
     },
     exportData () {
+      const category = this.$data.category.model
       this.$q.loading.show()
       let regexp = ''
       this.$data.cityModel.forEach((element, index) => {
@@ -137,7 +171,18 @@ export default {
         }
       })
       const newRegExp = new RegExp(regexp)
-      const newData = this.$data.newData
+      let newData = [...this.$data.newData]
+      // filter type
+      const filterTypeArray = []
+      if (category !== null) {
+        for (let i = 0, len = newData.length; i < len; i++) {
+          const obj = newData[i]
+          if (obj.category === category) {
+            filterTypeArray.push(obj)
+          }
+        }
+        newData = filterTypeArray
+      }
       let exportData = '分區別,醫事機構代碼,醫事機構名稱,機構地址,電話區域號碼 ,電話號碼,特約類別,型態別,醫事機構種類,終止合約或歇業日期,開業狀況\r\n'
       for (let i = 0, len = newData.length; i < len; i++) {
         if (newRegExp.test(newData[i].cityCode) === true) {
